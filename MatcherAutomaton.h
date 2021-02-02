@@ -55,16 +55,21 @@ public:
 					match = 7;
 					inputRead = 1;
 					acceptedInput = input.substr(0, 1);
-				} else if (input.substr(0, 2).compare(stringMatches.at(8)) == 0) {
+				}
+				if (input.substr(0, 2).compare(stringMatches.at(8)) == 0) {
 					match = 8;
 					inputRead = 2;
 					acceptedInput = input.substr(0, 2);
 				}
 			} else if (i > 8) {
 				if (input.substr(0, stringMatches.at(i).size()).compare(stringMatches.at(i)) == 0) {
-					match = i;
-					inputRead = stringMatches.at(i).size();
-					acceptedInput = input.substr(0, stringMatches.at(i).size());
+					if (!isalpha(input.at(stringMatches.at(i).size()))) {
+						match = i;
+						inputRead = stringMatches.at(i).size();
+						acceptedInput = input.substr(0, stringMatches.at(i).size());
+					} else {
+						return 0;
+					}
 				}
 			} else {
 				return inputRead;

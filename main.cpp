@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
 	std::ifstream iff;
 	iff.open(filename);
 	if (iff.is_open()){
-		std::cout << "opened file " << filename << " successfully!" << std::endl;
+		//std::cout << "opened file " << filename << " successfully!" << std::endl;
 	} else {
 		std::cout << "could not open file " << filename << std::endl;
 		exit (0);
@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
 	std::stringstream ss;
 	ss << iff.rdbuf();
 	fileContents = ss.str();
-	std::cout << fileContents << std::endl;
+	//std::cout << fileContents << std::endl;
 	iff.close();
 
 	Lexer* lexer = new Lexer();
