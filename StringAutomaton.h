@@ -21,12 +21,26 @@ public:
 				//std::cout << "i: "<< i << std::endl;
 				inputRead++;
 				if (input.at(i) == '\'') {
-					if (input.at(i+1) == '\''){
-						continue;
-					} else {
+					if (i == 1) {
+						if (input.at(i+1) != '\'') {
+							stringstring = input.substr(0, inputRead);
+							return inputRead;
+						} else {
+							i++; inputRead++; continue;
+						}
+					} else if (i > 1) {
+						if (i+1 < input.size()) { //check to avoid seg fault
+							if (input.at(i+1) == '\''){
+								i++; inputRead++; continue;
+							} else {
+								stringstring = input.substr(0, inputRead);
+								return inputRead;
+							}
+						}
+					} /*else {
 						stringstring = input.substr(0, inputRead);
 						return inputRead;
-					}
+					}*/
 				} else if (input.at(i) == '\n') {
 					newLines++;
 					//inputRead++;

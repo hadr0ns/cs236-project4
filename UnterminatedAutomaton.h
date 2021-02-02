@@ -23,13 +23,20 @@ public:
 			for (i = 0; i < input.size(); i++) {
 				inputRead++;
 				if (input.at(i) == '\''&& i > 0) {
-					if (input.at(i+1) == '\''){
-						i++;continue;
-					} else {
-						return 0;
+					if (i+1 < input.size()) {
+						if (input.at(i+1) == '\''){
+							i++;inputRead++;continue;
+						} else {
+							return 0;
+						}
 					}
-				} else if (input.at(i) == '\n' && i != input.size()-1) {
-					newLines++;
+				} else if (input.at(i) == '\n') {
+					if (i != input.size()-1) {
+						newLines++;
+					} else {
+						inputRead--;
+						continue;
+					}
 				} else {
 					continue;
 				}

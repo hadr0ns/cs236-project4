@@ -1,8 +1,9 @@
 #!/bin/bash
-NUM="20";
-TESTFILE="test-cases/in"${NUM}".txt";
-ORIGPRINT="test-cases/out"${NUM}".txt";
-MYPRINT="my-out"${NUM}".txt";
+NUM="2";
+FOLDER="1-100";
+TESTFILE="PassOff/"$FOLDER"/input"$NUM".txt";
+ORIGPRINT="PassOff/"$FOLDER"/answer"$NUM".txt";
+MYPRINT="passOffOut"$FOLDER"-"${NUM}".txt";
 
 ./main $TESTFILE > $MYPRINT;
 diff $ORIGPRINT $MYPRINT;
