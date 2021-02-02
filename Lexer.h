@@ -4,11 +4,13 @@
 #include <string>
 #include <vector>
 #include <cctype>
+#include <cstring>
 
 #include "Automaton.h"
 #include "Token.h"
 
 #include "MatcherAutomaton.h"
+#include "UndefinedAutomaton.h"
 
 class Lexer {
 private:
@@ -21,6 +23,7 @@ public:
 		//automata = new std::vector<Automaton*>;
 		//add all automaton instances
 		automata.push_back(new MatcherAutomaton());
+		automata.push_back(new UndefinedAutomaton());
 	};
 	~Lexer(){};
 	void Run(std::string input) {
@@ -30,13 +33,13 @@ public:
 			Automaton* maxAutomaton = automata.at(0);
 
 			//handle whitespace in between tokens
-			if (isspace(input.at(0))) {
-				if (input.at(0) == "\n") {
+			if (isspace(input[0])) {
+				if (input.substr(0, 1).compare("\n") == 0) {
 					lineNumber++;
-					input.erase(input.at(0));
-				} else if (input.at(0) == "\t") {
-					input.erase(input.at(0));
-				} else if (input.at(0) == " ") {
+					input.erase(input.begin()+0);
+				} else if (input.substr(0, 1).compare("\t") == 0) {
+					input.erase(input.begin()+0);
+				} else if (input.substr(0, 1).compare(" ") == 0) {
 					//figure this out for spaces;
 				} else {
 					std::cout << "Error in the whitespace function" << std::endl;
@@ -53,15 +56,22 @@ public:
 			}
 			if (maxRead > 0) {
 				Token* newToken = maxAutomaton->CreateToken();
+				newToken->SetLineNumber(lineNumber);
 				tokens.push_back(newToken);
 				lineNumber += maxAutomaton->NewLinesRead();
+				input.erase(0, maxRead);
 			}
 		}
-		TokenType* newType = new Token();
-		newType.SetType(ENDOF);
-		newType.SetString("");
-		newType.SetLineNumber(lineNumber);
-		//this may not be right; possibly linenumber + 1. 
+		Token* newType = new Token();
+		newType->SetType(ENDFILE);
+		newType->SetString("");
+		newType->SetLineNumber(lineNumber);
+		tokens.push_back(newType);
+		//this may not be right; possibly linenumber + 1.
+
+		for (unsigned int i = 0; i < tokens.size(); i++) {
+			std::cout << tokens.at(i)->to_string() << std::endl;
+		}
 	};
 	//other methods
 

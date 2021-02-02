@@ -5,7 +5,7 @@
 #include <string>
 #include <sstream>
 
-enum TokenType {COMMA, PERIOD, Q_MARK, LEFT_PAREN, RIGHT_PAREN, COLON, COLON_DASH, MULTIPLY, ADD, SCHEMES, FACTS, RULES, QUERIES, ID, STRING, COMMENT, UNDEFINED, ENDFILE };
+enum TokenType {COMMA, PERIOD, Q_MARK, LEFT_PAREN, RIGHT_PAREN, COLON, COLON_DASH, MULTIPLY, ADD, SCHEMES, FACTS, RULES, QUERIES, ID, STRING, COMMENT, UNDEFINED, ENDFILE, ERROR };
 //add in other types here
 //TokenType myNewType = COMMA;
 std::string tokenTypeToString(TokenType type) {
@@ -28,6 +28,7 @@ std::string tokenTypeToString(TokenType type) {
 		case COMMENT: return "COMMENT";
 		case UNDEFINED: return "UNDEFINED"; break;
 		case ENDFILE: return "EOF"; break;
+		case ERROR: return "ERROR"; break;
 		//case else: return "else error"; break;
 	}
 	return "ERROR";
@@ -45,8 +46,8 @@ public:
 		std::stringstream ss;
 		ss << lineNumber;
 		std::string lineNumberString = ss.str();
-		tokenString = "(" + tokenTypeString + ", \"" + associatedString + "\", " + lineNumberString + ")";
-		std::cout << tokenString << std::endl;
+		tokenString = "(" + tokenTypeString + ",\"" + associatedString + "\"," + lineNumberString + ")";
+		//std::cout << tokenString << std::endl;
 		return tokenString;
 	}
 	void SetString(std::string input){
