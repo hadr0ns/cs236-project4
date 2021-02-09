@@ -59,6 +59,15 @@ public:
 	void SetType(TokenType newType) {
 		type = newType;
 	}
+	TokenType GetType() {
+		return type;
+	}
+	std::string GetString() {
+		return associatedString;
+	}
+	int GetLineNumber() {
+		return lineNumber;
+	}
 
 
 

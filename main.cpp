@@ -4,7 +4,8 @@
 #include <fstream>
 #include <sstream>
 
-#include "Lexer.h"
+#include "Lexer/Lexer.h"
+#include "Parser/Parser.h"
 
 
 int main(int argc, char *argv[]) {
@@ -27,6 +28,10 @@ int main(int argc, char *argv[]) {
 
 	Lexer* lexer = new Lexer();
 	lexer->Run(fileContents);
+
+	Parser* parser = new Parser();
+	parser->InputTokens(lexer->GetTokens());
+	parser->Run();
 
 	return 0;
 }

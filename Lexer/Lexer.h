@@ -93,6 +93,9 @@ public:
 		}
 		std::cout << "Total Tokens = " << tokens.size();
 	};
+	std::vector<Token*> GetTokens() {
+		return tokens;
+	}
 	//other methods
 
 
