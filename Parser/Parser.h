@@ -17,6 +17,8 @@ private:
 	bool accepted;
 	bool hasSchemes;
 	bool hasFacts;
+	bool hasRules;
+	bool hasQueries;
 	int rejected;
 public:
 	Parser() {};
@@ -28,8 +30,8 @@ public:
 		rejected = -1;
 		hasSchemes = false;
 		hasFacts = false;
-		//bool hasRules = false;
-		//bool hasQueries = false;
+		hasRules = false;
+		hasQueries = false;
 		//for loop is bad idea here I think
 		//
 		//[ this is the part that checks for undefined tokens and breaks there
@@ -70,59 +72,78 @@ public:
 				return;
 			}
 		}
-		if (hasFacts == false) {
-			if (tokens.at(i)->GetType() == FACTS) {
-				hasFacts = true;
+		if (tokens.at(i)->GetType() == FACTS) {
+			hasFacts = true;
+			i++;
+			if (tokens.at(i)->GetType() == COLON) {
 				i++;
-				if (tokens.at(i)->GetType() == COLON) {
-					i++;
-				} else {
-					rejected = i;
-					accepted = false;
-					ReturnState();
-				}
+			} else {
+				rejected = i;
+				accepted = false;
+				ReturnState();
+			}
+			if (tokens.at(i)->GetType() != RULES) {
 				i = Facts(i);
 				if (!accepted) {
 					ReturnState();
 					return;
 				}
-			} else {
-				accepted = false;
+			}
+		}
+
+		if (tokens.at(i)->GetType() == RULES) {
+			hasRules = true;
+			if (!hasFacts) {
 				rejected = i;
+				accepted = false;
 				ReturnState();
 				return;
 			}
-		} else if (tokens.at(i)->GetType() == RULES || tokens.at(i)->GetType() == QUERIES) {
-			if (tokens.at(i)->GetType() == RULES) {
+			i++;
+			if (tokens.at(i)->GetType() == COLON) {
 				i++;
-				if (tokens.at(i)->GetType() == COLON) {
-					i++;
-				} else {
-					rejected = i;
-					accepted = false;
-					ReturnState();
-				}
+			} else {
+				rejected = i;
+				accepted = false;
+				ReturnState();
+			}
+			if (tokens.at(i)->GetType() != QUERIES) {
 				i = Rules(i);
 				if (!accepted) {
 					ReturnState();
 					return;
 				}
-			} else if (tokens.at(i)->GetType() == QUERIES) {
-				i++;
-				if (tokens.at(i)->GetType() == COLON) {
-					i++;
-				} else {
-					rejected = i;
-					accepted = false;
-					ReturnState();
-				}
-				i = Queries(i);
-				if (!accepted) {
-					ReturnState();
-					return;
-				}
 			}
-		} else if (tokens.at(i)->GetType() == ENDFILE) {
+		}
+		if (tokens.at(i)->GetType() == QUERIES) {
+			hasQueries = true;
+			if(!hasRules) {
+				rejected = i;
+				accepted = false;
+				ReturnState();
+				return;
+			}
+			i++;
+			if (tokens.at(i)->GetType() == COLON) {
+				i++;
+			} else {
+				rejected = i;
+				accepted = false;
+				ReturnState();
+				return;
+			}
+			i = Queries(i);
+			if (!accepted) {
+				ReturnState();
+				return;
+			}
+		} else {
+			rejected = i;
+			accepted = false;
+			ReturnState();
+			return;
+		}
+		if (tokens.at(i)->GetType() == ENDFILE) {
 			//end--this is the good ending
 			ReturnState();
 			return;
@@ -136,6 +157,32 @@ public:
 
 	int Schemes(int index){
 		//schemes()--runs Scheme() until end of SchemeList, until it hits Facts().
+		int i = index;
+		i = Scheme(i);
+		if (!accepted) {
+			return i;
+		}
+		bool schemeList = false;
+		do {
+			if (tokens.at(i)->GetType() == ID) {
+				i++;
+			} else {
+				return i;
+			}
+			if (tokens.at(i)->GetType() == LEFT_PAREN && tokens.at(i+1)->GetType() == ID) {
+				schemeList = true;
+				i = Scheme(i-1);
+				if (!accepted) {
+					schemeList = false;
+					return i;
+				}
+			} else {
+				return i-1;
+			}
+		} while (schemeList);
+
+		std::cout << "ended at Schemes()" << std::endl;
+		exit(0);
 		return 0;
 	};
 	int Scheme(int index){
@@ -192,7 +239,27 @@ public:
 	};
 
 	int Facts(int index){
-		//Facts()--runs Fact() until the cows go home
+		int i = index;
+		i = Fact(i);
+		if (!accepted) {
+			return i;
+		}
+		bool factList = false;
+		do {
+			if (tokens.at(i)->GetType() == ID) {
+				factList = true;
+				i = Fact(i);
+				if (!accepted) {
+					return i;
+				}
+			} else {
+				return i;
+			}
+
+		} while (factList);
+
+		std::cout << "ended at Facts()" << std::endl;
+		exit(0);
 		return 0;
 	};
 	int Fact(int index){
@@ -257,7 +324,36 @@ public:
 	};
 
 	int Rules(int index){
-		return 0;
+		int i = index;
+		if (tokens.at(i)->GetType() == ID) {
+			i = Rule(i);
+			if (!accepted) {
+				return i;
+			}
+		} else {
+			accepted = false;
+			rejected = i;
+			return rejected;
+		}
+
+		//rulesList
+		bool rulesList = false;
+		do {
+			if (tokens.at(i)->GetType() == ID) {
+				rulesList = true;
+				i = Rule(i);
+				if (!accepted) {
+					return i;
+				}
+			} else {
+				return i;
+			}
+		} while (rulesList);
+
+		std::cout << "ended in Rules()" << std::endl;
+		exit(0);
+		return -1;
+
 	};
 	int Rule(int index){
 		//not required
@@ -293,8 +389,10 @@ public:
 		if (tokens.at(i)->GetType() == ID) {
 			//idList
 			i++;
-			while (accepted) {
+			bool idList = false;
+			do {
 				if (tokens.at(i)->GetType() == COMMA) {
+					idList = true;
 					i++;
 					if (tokens.at(i)->GetType() == ID) {
 						i++;
@@ -304,15 +402,18 @@ public:
 						accepted = false;
 						return rejected;
 					}
-				} else if (tokens.at(i)->GetType() == RIGHT_PAREN) {
-					i++;
 				} else {
-					rejected = i;
-					accepted = false;
-					return rejected;
+					idList = false;
 				}
-			}
+			} while (idList);
 
+		} else {
+			rejected = i;
+			accepted = false;
+			return rejected;
+		}
+		if (tokens.at(i)->GetType() == RIGHT_PAREN) {
+			i++;
 		} else {
 			rejected = i;
 			accepted = false;
@@ -328,76 +429,105 @@ public:
 			return rejected;
 		}
 
-		//predicate(s)
+		//predicate 1
 		if (tokens.at(i)->GetType() == ID) {
 			//start setting stuff obv
-			i++;
 			i = Predicate(i);
-		} else {
-			rejected = i;
-			accepted = false;
-			return rejected;
-		}
-
-		/* this shouldn't be necessary
-		if (tokens.at(i)->GetType() == PERIOD) {
-			return i;
-		} else {
-			rejected = i;
-			accepted = false;
-			return rejected;
-		}
-		*/
-
-		std::cout << "yo the rules fn is broken" << std::endl;
-		exit(0);
-		return -1;
-	};
-
-	int Parameter(int index){
-		int i = index;
-		if (tokens.at(i)->GetType() == ID || tokens.at(i)->GetType() == STRING || tokens.at(i)->GetType() == LEFT_PAREN) {
-			//predicateList; structure builds a predicate and then checks for comma to continue;
-			while (accepted) {
-				if (tokens.at(i)->GetType() == ID) {
-					i++;
-				} else if (tokens.at(i)->GetType() == STRING) {
-					i++;
-				} else if (tokens.at(i)->GetType() == LEFT_PAREN) {
-					i = Expression(i);
-					if (!accepted) {
-						rejected = i;
-						return rejected;
-					}
-				} else {
-					rejected = i;
-					accepted = false;
-					return rejected;
-				}
-				if (tokens.at(i)->GetType() == RIGHT_PAREN || tokens.at(i)->GetType() == COMMA) {
-					i++;
-					if (tokens.at(i)->GetType() == COMMA) {
-						i++;
-						break;
-					} else if (tokens.at(i)->GetType() == RIGHT_PAREN) {
-						i++;
-						if (tokens.at(i)->GetType() == COMMA) {
-							i++; break;
-						}
-					}
-					//can end at right paren; if it does not, it needs a comma and to loop with new parameters;
-				}
+			if (!accepted) {
+				return i;
 			}
 		} else {
 			rejected = i;
 			accepted = false;
 			return rejected;
 		}
+
+		//predicateList
+		bool predicateList = false;
+		do {
+			if (tokens.at(i)->GetType() == COMMA) {
+				predicateList = true;
+				i++;
+				i = Predicate(i);
+				if (!accepted) {
+					return i;
+				}
+			} else {
+				predicateList = false;
+				break;
+			}
+		} while (predicateList);
+
+		if (tokens.at(i)->GetType() == PERIOD) {
+			i++;
+			return i;
+		} else {
+			accepted = false;
+			rejected = i;
+			return rejected;
+		}
+
+		std::cout << "Ended in Rule()" << std::endl;
+		exit(0);
 		return -1;
+	};
+
+	int Queries(int index){
+		int i = index;
+		i = Query(i);
+		if (!accepted) {
+			return i;
+		}
+
+		bool queryList = false;
+		do {
+			if (tokens.at(i)->GetType() == ID) {
+				queryList = true;
+				i = Query(i);
+				if (!accepted) {
+					return i;
+				}
+			} else {
+				return i;
+			}
+		} while (queryList);
+
+		std::cout << "ended in Queries()" << std::endl;
+		exit(0);
+		return -1;
+
+	};
+	int Query(int index){
+		int i = index;
+
+		i = Predicate(i);
+		if (!accepted) {
+			return i;
+		}
+		if (tokens.at(i)->GetType() == Q_MARK) {
+			i++;
+			return i;
+		} else {
+			rejected = i;
+			accepted = false;
+			return rejected;
+		}
+
+		std::cout << "Ended in Query()" <<std::endl;
+		exit(0);
+		return 0;
 	};
 
 	int Predicate(int index){
 		int i = index;
+		if (tokens.at(i)->GetType() ==ID) {
+			i++;
+		} else {
+			//this shouldn't matter; for sake of data structures;
+			rejected = i;
+			accepted = false;
+			return rejected;
+		}
 		if (tokens.at(i)->GetType() == LEFT_PAREN) {
 			i++;
 		} else {
@@ -405,10 +535,59 @@ public:
 			accepted = false;
 			return rejected;
 		}
+		i = Parameter(i);
+		if (!accepted) {
+			return i;
+		}
+		bool parameterList = false;
+		do {
+			if (tokens.at(i)->GetType() == COMMA) {
+				parameterList = true;
+				i++;
+			} else {
+				parameterList = false;
+				break;
+			}
+			i = Parameter(i);
+			if (!accepted) {
+				return i;
+			}
+		} while (parameterList);
 
-		return -1;
+		if (tokens.at(i)->GetType() == RIGHT_PAREN) {
+			i++;
+			return i;
+		} else {
+			rejected = i;
+			accepted = false;
+			return rejected;
+		}
+
+		std::cout << "Ended in Predicate()" << std::endl;
+		exit(0);
+		return 0;
 	};
+	int Parameter(int index){
+		int i = index;
+		if (tokens.at(i)->GetType() == ID) {
+			i++;
+			return i;
+		} else if (tokens.at(i)->GetType() == STRING) {
+			i++;
+			return i;
+		} else if (tokens.at(i)->GetType() == LEFT_PAREN) {
+			i = Expression(i);
+			return i;
+		} else {
+			rejected = i;
+			accepted = false;
+			return rejected;
+		}
 
+		std::cout << "end in Parameter()" << std::endl;
+		exit(0);
+		return 0;
+	};
 	int Expression(int index){
 		//parameter -> STRING | ID | expression
 		//expression -> LEFT_PAREN parameter operator parameter RIGHT_PAREN
@@ -416,42 +595,22 @@ public:
 		//this B is gonna be recursive
 		int i = index;
 		i++;
-		if (tokens.at(i)->GetType() == STRING || tokens.at(i)->GetType() == ID || tokens.at(i)->GetType() == LEFT_PAREN) {
-			bool hasOperator = false;
-			while (accepted) {
-				if (tokens.at(i)->GetType() == ID) {
-					i++;
-					if (hasOperator) {
-						break;
-					}
-				} else if (tokens.at(i)->GetType() == STRING) {
-					i++;
-					if (hasOperator) {
-						break;
-					}
-				} else if (tokens.at(i)->GetType() == LEFT_PAREN) {
-					i = Expression(i);
-					if (!accepted) {
-						rejected = i;
-						return rejected;
-					}
-					if (hasOperator) {
-						break;
-					}
-				} else {
-					rejected = i;
-					accepted = false;
-					return rejected;
-				}
-				if (tokens.at(i)->GetType() == ADD || tokens.at(i)->GetType() == MULTIPLY) {
-					i++;
-					hasOperator = true;
-				}
-			}
+		//bool hasOperator = false;
+		i = Parameter(i);
+		if (!accepted) {
+			return i;
+		}
+		if (tokens.at(i)->GetType() == ADD || tokens.at(i)->GetType() == MULTIPLY) {
+			i++;
+			//hasOperator = true;
 		} else {
 			rejected = i;
 			accepted = false;
 			return rejected;
+		}
+		i = Parameter(i);
+		if (!accepted) {
+			return i;
 		}
 		if (tokens.at(i)->GetType() == RIGHT_PAREN) {
 			i++;
@@ -462,97 +621,7 @@ public:
 			return rejected;
 		}
 
-		std::cout << "expressions is broken" << std::endl;
-		exit(0);
-		return 0;
-	};
-
-	int Queries(int index){
-		return 0;
-	};
-	int Query(int index){
-		//re-implement using Predicate and Parameter function above
-		//colon query querylist EOF
-		//query->predicate Q_MARK
-		//predicate-> ID LEFT_PAREN parameter parameterList RIGHT_PAREN
-		//parameter -> STRING | ID | expression
-		//queryList->query queryList;
-		int i = index;
-
-		//can I adapt the rules code here, just with end Q_Mark?
-		if (tokens.at(i)->GetType() == ID) {
-			//start setting stuff obv
-			i++;
-		} else {
-			rejected = i;
-			accepted = false;
-			return rejected;
-		}
-		if (tokens.at(i)->GetType() == LEFT_PAREN) {
-			i++;
-		} else {
-			rejected = i;
-			accepted = false;
-			return rejected;
-		}
-		if (tokens.at(i)->GetType() == ID || tokens.at(i)->GetType() == STRING || tokens.at(i)->GetType() == LEFT_PAREN) {
-			//predicateList; structure builds a predicate and then checks for comma to continue;
-			while (accepted) {
-				if (tokens.at(i)->GetType() == ID) {
-					i++;
-				} else if (tokens.at(i)->GetType() == STRING) {
-					i++;
-				} else if (tokens.at(i)->GetType() == LEFT_PAREN) {
-					i = Expression(i);
-					if (!accepted) {
-						rejected = i;
-						return rejected;
-					}
-				} else {
-					rejected = i;
-					accepted = false;
-					return rejected;
-				}
-				if (tokens.at(i)->GetType() == RIGHT_PAREN || tokens.at(i)->GetType() == COMMA) {
-					i++;
-					if (tokens.at(i)->GetType() == COMMA) {
-						i++;
-						break;
-					} else if (tokens.at(i)->GetType() == RIGHT_PAREN) {
-						i++;
-						if (tokens.at(i)->GetType() == COMMA) {
-							i++; break;
-						}
-					}
-					//can end at right paren; if it does not, it needs a comma and to loop with new parameters;
-				}
-				//it shouldn't make it down here if the above code works as expected; thus, it either reaches something wrong or it is the end of the list and it returns.
-				if (tokens.at(i)->GetType() == Q_MARK) {
-					i++;
-					break;
-				} else {
-					rejected = i;
-					accepted = false;
-					return rejected;
-				}
-			}
-			if (tokens.at(i)->GetType() == ID) {
-				i = Queries(i);
-				if (!accepted) {
-					return rejected;
-				} else {
-					return i;
-				}
-			} else {
-				return i;
-			}
-		} else {
-			rejected = i;
-			accepted = false;
-			return rejected;
-		}
-
-		std::cout << "Queries is busted" <<std::endl;
+		std::cout << "Ended in Expression()" << std::endl;
 		exit(0);
 		return 0;
 	};
@@ -562,17 +631,18 @@ public:
 			if (inputTokens.at(i)->GetType() == COMMENT) {
 				continue;
 			} else {
-				tokens.at(i) = inputTokens.at(i);
+				tokens.push_back(inputTokens.at(i));
 			}
-	}
-	return;};
+		}
+		return;
+	};
 
 	void ReturnState(){
 		if (accepted) {
 			std::cout << "Success!" << std::endl;
 		} else {
 			std::cout << "Failure!" << std::endl;
-			std::cout << tokens.at(rejected)->to_string();
+			std::cout << tokens.at(rejected)->to_string() << std:: endl;
 		}
 	};
 };
