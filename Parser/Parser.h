@@ -3,12 +3,15 @@
 
 #include <iostream>
 #include <vector>
+#include <sstream>
 
 #include "../Lexer/Token.h"
 #include "Rule.h"
 #include "DatalogProgram.h"
 #include "Predicate.h"
 #include "Parameter.h"
+#include "SimpleParameter.h"
+#include "ComplexParameter.h"
 
 class Parser {
 private:
@@ -20,6 +23,12 @@ private:
 	bool hasRules;
 	bool hasQueries;
 	int rejected;
+	/*
+	Predicate* query;
+	Predicate* passAlongPredicate;
+	Parameter* passAlongParameter;
+	*/
+	//Rule* newRule;
 public:
 	Parser() {};
 	~Parser() {};
@@ -186,11 +195,13 @@ public:
 		return 0;
 	};
 	int Scheme(int index){
+		Predicate* newScheme = new Predicate();
 		//ID LEFT_PAREN ID idList RIGHT_PAREN
 		//idList-> COMMA ID idList
 		int i = index;
 		if (tokens.at(i)->GetType() == ID) {
 			//start setting stuff obv
+			newScheme->AddName(tokens.at(i)->GetString());
 			i++;
 		} else {
 			rejected = i;
@@ -206,11 +217,19 @@ public:
 		}
 		if (tokens.at(i)->GetType() == ID) {
 			//idList
+			SimpleParameter* parameter1 = new SimpleParameter();
+			parameter1->SetType(IDD);
+			parameter1->SetParameter(tokens.at(i)->GetString());
+			newScheme->AddToBody(parameter1);
 			i++;
 			while (accepted) {
 				if (tokens.at(i)->GetType() == COMMA) {
 					i++;
 					if (tokens.at(i)->GetType() == ID) {
+						SimpleParameter* parameter = new SimpleParameter();
+						parameter->SetType(IDD);
+						parameter->SetParameter(tokens.at(i)->GetString());
+						newScheme->AddToBody(parameter);
 						i++;
 						continue;
 					} else {
@@ -220,6 +239,7 @@ public:
 					}
 				} else if (tokens.at(i)->GetType() == RIGHT_PAREN) {
 					i++;
+					datalog->AddScheme(newScheme);
 					return i;
 				} else {
 					rejected = i;
@@ -266,8 +286,10 @@ public:
 		//ID LEFT_PAREN STRING stringList RIGHT_PAREN PERIOD
 		//stringList -> COMMA STRING stringList
 		int i = index;
+		Predicate* newFact = new Predicate();
 		if (tokens.at(i)->GetType() == ID) {
 			//start setting stuff obv
+			newFact->AddName(tokens.at(i)->GetString());
 			i++;
 		} else {
 			rejected = i;
@@ -282,12 +304,20 @@ public:
 			return rejected;
 		}
 		if (tokens.at(i)->GetType() == STRING) {
-			//idList
+			//StringList
+			SimpleParameter* parameter1 = new SimpleParameter();
+			parameter1->SetType(STR);
+			parameter1->SetParameter(tokens.at(i)->GetString());
+			newFact->AddToBody(parameter1);
 			i++;
 			while (accepted) {
 				if (tokens.at(i)->GetType() == COMMA) {
 					i++;
 					if (tokens.at(i)->GetType() == STRING) {
+						SimpleParameter* parameter = new SimpleParameter();
+						parameter->SetType(STR);
+						parameter->SetParameter(tokens.at(i)->GetString());
+						newFact->AddToBody(parameter);
 						i++;
 						continue;
 					} else {
@@ -311,6 +341,7 @@ public:
 			return rejected;
 		}
 		if (tokens.at(i)->GetType() == PERIOD) {
+			datalog->AddFact(newFact);
 			i++;
 			return i;
 		} else {
@@ -326,7 +357,7 @@ public:
 	int Rules(int index){
 		int i = index;
 		if (tokens.at(i)->GetType() == ID) {
-			i = Rule(i);
+			i = RuleHandler(i);
 			if (!accepted) {
 				return i;
 			}
@@ -341,7 +372,7 @@ public:
 		do {
 			if (tokens.at(i)->GetType() == ID) {
 				rulesList = true;
-				i = Rule(i);
+				i = RuleHandler(i);
 				if (!accepted) {
 					return i;
 				}
@@ -355,7 +386,7 @@ public:
 		return -1;
 
 	};
-	int Rule(int index){
+	int RuleHandler(int index){
 		//not required
 		//Rules-> headPredicate COLON_DASH predicate predicateList PERIOD
 		//predicateList->COMMA predicate predicateList
@@ -369,9 +400,12 @@ public:
 		//idList -> COMMA ID idList | lam
 
 		int i = index;
+		Rule* newRule = new Rule();
+		Predicate* headPredicate = new Predicate();
 		//headPredicate
 		if (tokens.at(i)->GetType() == ID) {
 			//start setting stuff obv
+			headPredicate->AddName(tokens.at(i)->GetString());
 			i++;
 		} else {
 			rejected = i;
@@ -388,6 +422,10 @@ public:
 		//idList
 		if (tokens.at(i)->GetType() == ID) {
 			//idList
+			SimpleParameter* parameter1 = new SimpleParameter();
+			parameter1->SetType(IDD);
+			parameter1->SetParameter(tokens.at(i)->GetString());
+			headPredicate->AddToBody(parameter1);
 			i++;
 			bool idList = false;
 			do {
@@ -395,6 +433,10 @@ public:
 					idList = true;
 					i++;
 					if (tokens.at(i)->GetType() == ID) {
+						SimpleParameter* parameter = new SimpleParameter();
+						parameter->SetType(IDD);
+						parameter->SetParameter(tokens.at(i)->GetString());
+						headPredicate->AddToBody(parameter);
 						i++;
 						continue;
 					} else {
@@ -419,6 +461,7 @@ public:
 			accepted = false;
 			return rejected;
 		}
+		newRule->SetHeadPredicate(headPredicate);
 		//end of headPredicate
 
 		if (tokens.at(i)->GetType() == COLON_DASH) {
@@ -431,10 +474,16 @@ public:
 
 		//predicate 1
 		if (tokens.at(i)->GetType() == ID) {
-			//start setting stuff obv
-			i = Predicate(i);
-			if (!accepted) {
-				return i;
+			Predicate* passAlongPredicate = new Predicate();
+			if (tokens.at(i)->GetType() == ID) {
+				//start setting stuff obv
+				//int startIndex = i;
+				i = PredicateHandler(i, passAlongPredicate);
+				newRule->AddPredicate(passAlongPredicate);
+
+				if (!accepted) {
+					return i;
+				}
 			}
 		} else {
 			rejected = i;
@@ -442,13 +491,16 @@ public:
 			return rejected;
 		}
 
+
 		//predicateList
 		bool predicateList = false;
 		do {
+			Predicate* passAlongPredicate = new Predicate();
 			if (tokens.at(i)->GetType() == COMMA) {
 				predicateList = true;
 				i++;
-				i = Predicate(i);
+				i = PredicateHandler(i, passAlongPredicate);
+				newRule->AddPredicate(passAlongPredicate);
 				if (!accepted) {
 					return i;
 				}
@@ -459,6 +511,7 @@ public:
 		} while (predicateList);
 
 		if (tokens.at(i)->GetType() == PERIOD) {
+			datalog->AddRule(newRule);
 			i++;
 			return i;
 		} else {
@@ -499,13 +552,15 @@ public:
 	};
 	int Query(int index){
 		int i = index;
+		Predicate* passAlongPredicate = new Predicate();
 
-		i = Predicate(i);
+		i = PredicateHandler(i, passAlongPredicate);
 		if (!accepted) {
 			return i;
 		}
 		if (tokens.at(i)->GetType() == Q_MARK) {
 			i++;
+			datalog->AddQuery(passAlongPredicate);
 			return i;
 		} else {
 			rejected = i;
@@ -518,9 +573,10 @@ public:
 		return 0;
 	};
 
-	int Predicate(int index){
+	int PredicateHandler(int index, Predicate* &currentPredicate){
 		int i = index;
 		if (tokens.at(i)->GetType() ==ID) {
+			currentPredicate->AddName(tokens.at(i)->GetString());
 			i++;
 		} else {
 			//this shouldn't matter; for sake of data structures;
@@ -530,15 +586,27 @@ public:
 		}
 		if (tokens.at(i)->GetType() == LEFT_PAREN) {
 			i++;
+			if (tokens.at(i)->GetType() == LEFT_PAREN) {
+				ComplexParameter* parameter = new ComplexParameter();
+				i = Expression(i, parameter);
+				if (!accepted) {
+					return i;
+				}
+				currentPredicate->AddToBody(parameter);
+			} else {
+				SimpleParameter* parameter = new SimpleParameter();
+				i = ParameterHandler(i, parameter);
+				if (!accepted) {
+					return i;
+				}
+				currentPredicate->AddToBody(parameter);
+			}
 		} else {
 			rejected = i;
 			accepted = false;
 			return rejected;
 		}
-		i = Parameter(i);
-		if (!accepted) {
-			return i;
-		}
+
 		bool parameterList = false;
 		do {
 			if (tokens.at(i)->GetType() == COMMA) {
@@ -548,10 +616,22 @@ public:
 				parameterList = false;
 				break;
 			}
-			i = Parameter(i);
-			if (!accepted) {
-				return i;
+			if (tokens.at(i)->GetType() == LEFT_PAREN) {
+				ComplexParameter* parameter = new ComplexParameter();
+				i = Expression(i, parameter);
+				if (!accepted) {
+					return i;
+				}
+				currentPredicate->AddToBody(parameter);
+			} else {
+				SimpleParameter* parameter = new SimpleParameter();
+				i = ParameterHandler(i, parameter);
+				if (!accepted) {
+					return i;
+				}
+				currentPredicate->AddToBody(parameter);
 			}
+
 		} while (parameterList);
 
 		if (tokens.at(i)->GetType() == RIGHT_PAREN) {
@@ -563,20 +643,21 @@ public:
 			return rejected;
 		}
 
-		std::cout << "Ended in Predicate()" << std::endl;
+		std::cout << "Ended in PredicateHandler()" << std::endl;
 		exit(0);
 		return 0;
 	};
-	int Parameter(int index){
+	int ParameterHandler(int index, SimpleParameter* &currentParameter){
 		int i = index;
 		if (tokens.at(i)->GetType() == ID) {
+			currentParameter->SetType(IDD);
+			currentParameter->SetParameter(tokens.at(i)->GetString());
 			i++;
 			return i;
 		} else if (tokens.at(i)->GetType() == STRING) {
+			currentParameter->SetType(STR);
+			currentParameter->SetParameter(tokens.at(i)->GetString());
 			i++;
-			return i;
-		} else if (tokens.at(i)->GetType() == LEFT_PAREN) {
-			i = Expression(i);
 			return i;
 		} else {
 			rejected = i;
@@ -588,7 +669,7 @@ public:
 		exit(0);
 		return 0;
 	};
-	int Expression(int index){
+	int Expression(int index, ComplexParameter* &expression){
 		//parameter -> STRING | ID | expression
 		//expression -> LEFT_PAREN parameter operator parameter RIGHT_PAREN
 		//operator -> ADD | MULTIPLY
@@ -596,11 +677,24 @@ public:
 		int i = index;
 		i++;
 		//bool hasOperator = false;
-		i = Parameter(i);
-		if (!accepted) {
-			return i;
+		if (tokens.at(i)->GetType() == LEFT_PAREN) {
+			ComplexParameter* parameter1 = new ComplexParameter();
+			i = Expression(i, parameter1);
+			if (!accepted) {
+				return i;
+			}
+			expression->SetParameter1(parameter1);
+		} else {
+			SimpleParameter* parameter1 = new SimpleParameter();
+			i = ParameterHandler(i, parameter1);
+			if (!accepted) {
+				return i;
+			}
+			expression->SetParameter1(parameter1);
 		}
+
 		if (tokens.at(i)->GetType() == ADD || tokens.at(i)->GetType() == MULTIPLY) {
+			expression->SetOperator(tokens.at(i)->GetString());
 			i++;
 			//hasOperator = true;
 		} else {
@@ -608,9 +702,20 @@ public:
 			accepted = false;
 			return rejected;
 		}
-		i = Parameter(i);
-		if (!accepted) {
-			return i;
+		if (tokens.at(i)->GetType() == LEFT_PAREN) {
+			ComplexParameter* parameter2 = new ComplexParameter();
+			i = Expression(i, parameter2);
+			if (!accepted) {
+				return i;
+			}
+			expression->SetParameter2(parameter2);
+		} else {
+			SimpleParameter* parameter2 = new SimpleParameter();
+			i = ParameterHandler(i, parameter2);
+			if (!accepted) {
+				return i;
+			}
+			expression->SetParameter2(parameter2);
 		}
 		if (tokens.at(i)->GetType() == RIGHT_PAREN) {
 			i++;
@@ -625,6 +730,13 @@ public:
 		exit(0);
 		return 0;
 	};
+	std::string ParseExpression(int startIndex, int endIndex) {
+		std::stringstream ss;
+		for (int i = startIndex; i <= endIndex; i++) {
+			ss << tokens.at(i)->GetString();
+		}
+		return ss.str();
+	}
 
 	void InputTokens(std::vector<Token*> inputTokens){
 		for(unsigned int i = 0; i < inputTokens.size(); i++){
@@ -640,6 +752,7 @@ public:
 	void ReturnState(){
 		if (accepted) {
 			std::cout << "Success!" << std::endl;
+			std::cout << datalog->to_string();
 		} else {
 			std::cout << "Failure!" << std::endl;
 			std::cout << tokens.at(rejected)->to_string() << std:: endl;
@@ -668,4 +781,6 @@ public:
 		Expression()--possibly the only one I won't need to rewrite
 		Queries()
 		Query();
+
+	if stuff as is does not work, make an Expression.h class that has parameter and operator objects
 */
