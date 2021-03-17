@@ -65,8 +65,6 @@ public:
 			ss << *i;
 			ss << "\n";
 		}
-
-
 		return ss.str();
 	};
 	void AddScheme(Predicate* scheme) {
@@ -83,6 +81,15 @@ public:
 	};
 	void AddQuery(Predicate* query) {
 		queries.push_back(query);
+	}
+	std::vector<Predicate*> GetSchemes() {
+		return schemes;
+	}
+	std::vector<Predicate*> GetFacts() {
+		return facts;
+	}
+	std::vector<Predicate*> GetQueries() {
+		return queries;
 	}
 
 };

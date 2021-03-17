@@ -5,7 +5,7 @@
 #include <vector>
 #include <sstream>
 
-#include "../Lexer/Token.h"
+#include "Token.h"
 #include "Rule.h"
 #include "DatalogProgram.h"
 #include "Predicate.h"
@@ -752,12 +752,16 @@ public:
 	void ReturnState(){
 		if (accepted) {
 			std::cout << "Success!" << std::endl;
-			std::cout << datalog->to_string();
+			//std::cout << datalog->to_string();
 		} else {
 			std::cout << "Failure!" << std::endl;
 			std::cout << tokens.at(rejected)->to_string() << std:: endl;
 		}
 	};
+
+	DatalogProgram* GetDatalogProgram() {
+		return datalog;
+	}
 };
 
 #endif

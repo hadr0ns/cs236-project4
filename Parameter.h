@@ -9,6 +9,7 @@ enum ParameterType {IDD, STR, EXPRESSION};
 class Parameter {
 private:
 	ParameterType parameterType;
+	bool isConstant;
 public:
 	//Parameter() {};
 	virtual ~Parameter() {};
@@ -17,6 +18,16 @@ public:
 	}
 	void SetType(ParameterType input) {
 		parameterType = input;
+		if (parameterType == STR) {
+			isConstant = true;
+		} else if (parameterType == IDD) {
+			isConstant = false;
+		} else {
+			isConstant = false;
+		}
+	}
+	bool IsConstant() {
+		return isConstant;
 	}
 
 };

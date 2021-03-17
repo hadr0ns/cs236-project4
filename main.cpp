@@ -4,8 +4,9 @@
 #include <fstream>
 #include <sstream>
 
-#include "Lexer/Lexer.h"
-#include "Parser/Parser.h"
+#include "Lexer.h"
+#include "Parser.h"
+#include "Interpreter.h"
 
 
 int main(int argc, char *argv[]) {
@@ -32,6 +33,9 @@ int main(int argc, char *argv[]) {
 	Parser* parser = new Parser();
 	parser->InputTokens(lexer->GetTokens());
 	parser->Run();
+
+	Interpreter* interpreter = new Interpreter();
+	interpreter->Run(parser->GetDatalogProgram());
 
 	return 0;
 }

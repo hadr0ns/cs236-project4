@@ -31,8 +31,11 @@ public:
 		stringVersion+=")";
 		return stringVersion;
 	};
-	std::vector<Parameter*>GetBody() {
+	std::vector<Parameter*> GetBody() {
 		return body;
+	}
+	std::string GetName() {
+		return name;
 	}
 
 };
