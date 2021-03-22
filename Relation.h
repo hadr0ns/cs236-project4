@@ -12,7 +12,7 @@
 
 class Relation {
 private:
-	std::set<Tuple*> tuples;
+	std::set<Tuple> tuples;
 	std::string name;
 	Header* header;
 
@@ -23,9 +23,9 @@ public:
 		//std::cout << this->to_string()<<std::endl;
 		Relation* returnRelation = new Relation();
 		for (auto elem : tuples) {
-			std::cout<<elem->to_string()<<std::endl;
+			//std::cout<<elem->to_string()<<std::endl;
 
-			if (elem->GetColumn(index) == value) {
+			if (elem.GetColumn(index) == value) {
 				returnRelation->AddTuple(elem);
 			}
 		}
@@ -35,7 +35,7 @@ public:
 	Relation* Select(int index1, int index2) {
 		Relation* returnRelation = new Relation();
 		for (auto elem : tuples) {
-			if (elem->GetColumn(index1) == elem->GetColumn(index2)) {
+			if (elem.GetColumn(index1) == elem.GetColumn(index2)) {
 				returnRelation->AddTuple(elem);
 			}
 		}
@@ -45,9 +45,9 @@ public:
 	Relation* Project(std::vector<int> indices) {
 		Relation* returnRelation = new Relation();
 		for (auto elem : tuples) {
-			Tuple* newTuple = new Tuple();
+			Tuple newTuple;
 			for (unsigned int i = 0; i < indices.size(); i++) {
-				newTuple->AddValue(elem->GetColumn(i));
+				newTuple.AddValue(elem.GetColumn(i));
 			}
 			returnRelation->AddTuple(newTuple);
 		}
@@ -55,10 +55,14 @@ public:
 	};
 	Relation* Rename(std::vector<std::string> attributes){
 		Relation* returnRelation = new Relation();
+		for (auto elem : tuples) {
+			returnRelation->AddTuple(elem);
+		}
 		Header* header = new Header();
 		for (auto elem : attributes) {
 			header->AddAttribute(elem);
 		}
+		returnRelation->SetHeader(header);
 		return returnRelation;
 
 	};
@@ -68,7 +72,7 @@ public:
 	void SetHeader(Header* input) {
 		header = input;
 	}
-	void AddTuple(Tuple* tuple) {
+	void AddTuple(Tuple tuple) {
 		tuples.insert(tuple);
 	}
 	std::string GetName() {
@@ -80,7 +84,7 @@ public:
 		ss<<"Tuples: ";
 		int i = 0;
 		for (auto elem : tuples) {
-			ss<<i<<": "<< elem->to_string();
+			ss<<i<<": "<< elem.to_string();
 			i++;
 		}
 		return ss.str();
@@ -88,13 +92,34 @@ public:
 	void PrintRemainingTuples() {
 		std::cout << "Remaining:" <<std::endl;
 		for (auto elem : tuples) {
-			std::cout << elem->to_string()<<std::endl;
+			std::cout << elem.to_string()<<std::endl;
 		}
 	}
 	std::string evaluated_to_string() {
 		std::stringstream ss;
+		if (is_empty()) {
+			ss<<"No";
+		} else {
+			ss << "Yes(" << tuples.size() << ")";
+			//fill in the rest here
+			if (header->GetSize() > 0) {
+				for (auto elem : tuples) {
+					ss << "\n  ";
+					for (int i = 0; i < header->GetSize(); i++) {
+						if (i < 0) {
+							ss <<", ";
+						}
+						ss << header->GetAttribute(i) << "="<< elem.GetColumn(i);
+					}
+				}
+			}
 
+
+		}
 		return ss.str();
+	}
+	bool is_empty() {
+		return tuples.empty();
 	}
 
 };

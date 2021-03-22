@@ -29,6 +29,12 @@ public:
 		}
 		return ss.str();
 	}
+	std::string GetAttribute(int index) {
+		return attributes.at(index);
+	}
+	int GetSize() {
+		return attributes.size();
+	}
 };
 
 #endif

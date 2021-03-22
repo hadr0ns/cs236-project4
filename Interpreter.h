@@ -34,7 +34,7 @@ public:
 		}
 	}
 	Relation* evaluatePredicate(Predicate* p) {
-		std::cout << "evaluating predicate" << std::endl;
+		//std::cout << "evaluating predicate" << std::endl;
 		//std::cout << database->to_string()<<std::endl;
 		Relation* matchingRelation = new Relation();
 		//Relation* returnRelation = new Relation();
@@ -49,31 +49,28 @@ public:
 			if (p->GetBody().at(i)->IsConstant()) {
 				matchingRelation = matchingRelation->Select(i, nameAtI);
 			} else {
-				if (i > 0) {
-					bool seen = false;
-					for (auto elem : seenVariables) {
-						if (elem.first == nameAtI) {
-							//have we seen this variable before?
-							seen = true;
-							matchingRelation = matchingRelation->Select(elem.second, i);
-						}
+				bool seen = false;
+				for (auto elem : seenVariables) {
+					if (elem.first == nameAtI) {
+						//have we seen this variable before?
+						seen = true;
+						matchingRelation = matchingRelation->Select(elem.second, i);
 					}
-					if (!seen) {
-						seenVariables.insert({nameAtI, i});
-						seenVariablesStrings.push_back(nameAtI);
-						seenVariablesIndices.push_back(i);
-					}
-
+				}
+				if (!seen) {
+					seenVariables.insert({nameAtI, i});
+					seenVariablesStrings.push_back(nameAtI);
+					seenVariablesIndices.push_back(i);
 				}
 			}
-			matchingRelation = matchingRelation->Project(seenVariablesIndices);
-			matchingRelation = matchingRelation->Rename(seenVariablesStrings);
 		}
+		matchingRelation = matchingRelation->Project(seenVariablesIndices);
+		matchingRelation = matchingRelation->Rename(seenVariablesStrings);
 		return matchingRelation;
 	};
 	void Print(Predicate* query, Relation* relation) {
-		std::cout << query->to_string() << std::endl;
-		std::cout << relation->to_string() <<std::endl;
+		std::cout << query->to_string()<< "? ";
+		std::cout << relation->evaluated_to_string() <<std::endl;
 	}
 };
 

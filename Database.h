@@ -19,7 +19,7 @@ private:
 	std::vector<Predicate*> facts;
 	std::vector<Predicate*> queries;
 	std::vector<Header*> headers;
-	std::vector<Tuple*> tuples;
+	std::vector<Tuple> tuples;
 public:
 	Database() {};
 	void Build(DatalogProgram* program) {
@@ -44,12 +44,12 @@ public:
 		}
 
 		for (unsigned int i = 0; i < facts.size(); i++) {
-			Tuple* tuple = new Tuple();
-			tuple->SetName(facts.at(i)->GetName());
+			Tuple tuple;
+			tuple.SetName(facts.at(i)->GetName());
 			std::vector<Parameter*> parameters;
 			parameters = facts.at(i)->GetBody();
 			for (unsigned int j = 0; j < parameters.size(); j++) {
-				tuple->AddValue(parameters.at(j)->to_string());
+				tuple.AddValue(parameters.at(j)->to_string());
 			}
 			tuples.push_back(tuple);
 		}
@@ -60,7 +60,7 @@ public:
 			relation->SetName(relationName);
 			relation->SetHeader(headers.at(i));
 			for (unsigned int j = 0; j < tuples.size(); j++) {
-				if (tuples.at(j)->GetName() == relationName) {
+				if (tuples.at(j).GetName() == relationName) {
 					relation->AddTuple(tuples.at(j));
 				}
 			}
