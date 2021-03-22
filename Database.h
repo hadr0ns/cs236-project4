@@ -79,6 +79,14 @@ public:
 	std::vector<Predicate*> GetQueries() {
 		return queries;
 	}
+	Relation* GetMatchingRelation(std::string name) {
+		for (std::map<std::string, Relation*>::iterator it = databaseMap.begin(); it != databaseMap.end(); it++) {
+			if (it->first == name) {
+				return it->second;
+			}
+		}
+		return 0;
+	}
 
 
 };

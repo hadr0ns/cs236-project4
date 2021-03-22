@@ -8,11 +8,12 @@
 #include "Relation.h"
 
 class Tuple {
-private:
+protected:
 	std::vector<std::string> values;
 	std::string associatedName;
 public:
 	Tuple() {};
+	//TODO: this is problematic, leading to duplicated entries.
 	bool operator< (const Tuple & other) const{
 		//compare this tuple to another tuple i guess?
 		return this->values < other.values;
@@ -32,6 +33,12 @@ public:
 			ss<<values.at(i)<<"\n";
 		}
 		return ss.str();
+	}
+	std::string GetColumn(int index) {
+		return values.at(index);
+	}
+	std::vector<std::string> GetValues() {
+		return values;
 	}
 };
 

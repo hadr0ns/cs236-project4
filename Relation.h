@@ -18,16 +18,48 @@ private:
 
 public:
 	Relation(){};
-	void Select(int index, std::string value) {
+	//should these be void? or a vector of tuples lol--ans:modifying an existing relation to match
+	Relation* Select(int index, std::string value) {
+		//std::cout << this->to_string()<<std::endl;
+		Relation* returnRelation = new Relation();
+		for (auto elem : tuples) {
+			std::cout<<elem->to_string()<<std::endl;
 
+			if (elem->GetColumn(index) == value) {
+				returnRelation->AddTuple(elem);
+			}
+		}
+		//PrintRemainingTuples();
+		return returnRelation;
 	};
-	void Select(int index1, int index2) {
-
+	Relation* Select(int index1, int index2) {
+		Relation* returnRelation = new Relation();
+		for (auto elem : tuples) {
+			if (elem->GetColumn(index1) == elem->GetColumn(index2)) {
+				returnRelation->AddTuple(elem);
+			}
+		}
+		//PrintRemainingTuples();
+		return returnRelation;
 	};
-	void Project(std::list<int> indices) {
-
+	Relation* Project(std::vector<int> indices) {
+		Relation* returnRelation = new Relation();
+		for (auto elem : tuples) {
+			Tuple* newTuple = new Tuple();
+			for (unsigned int i = 0; i < indices.size(); i++) {
+				newTuple->AddValue(elem->GetColumn(i));
+			}
+			returnRelation->AddTuple(newTuple);
+		}
+		return returnRelation;
 	};
-	void Rename(std::list<std::string> attributes){
+	Relation* Rename(std::vector<std::string> attributes){
+		Relation* returnRelation = new Relation();
+		Header* header = new Header();
+		for (auto elem : attributes) {
+			header->AddAttribute(elem);
+		}
+		return returnRelation;
 
 	};
 	void SetName(std::string string) {
@@ -51,6 +83,17 @@ public:
 			ss<<i<<": "<< elem->to_string();
 			i++;
 		}
+		return ss.str();
+	}
+	void PrintRemainingTuples() {
+		std::cout << "Remaining:" <<std::endl;
+		for (auto elem : tuples) {
+			std::cout << elem->to_string()<<std::endl;
+		}
+	}
+	std::string evaluated_to_string() {
+		std::stringstream ss;
+
 		return ss.str();
 	}
 

@@ -17,6 +17,9 @@ public:
 	std::string to_string() {
 		return parameter;
 	};
+	std::string GetName() {
+		return parameter;
+	}
 
 };
 

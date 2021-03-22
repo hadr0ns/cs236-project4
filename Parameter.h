@@ -29,6 +29,9 @@ public:
 	bool IsConstant() {
 		return isConstant;
 	}
+	virtual std::string GetName() {
+		return "default";
+	}
 
 };
 
