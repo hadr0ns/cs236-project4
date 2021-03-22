@@ -751,7 +751,7 @@ public:
 
 	void ReturnState(){
 		if (accepted) {
-			std::cout << "Success!" << std::endl;
+			//std::cout << "Success!" << std::endl;
 			//std::cout << datalog->to_string();
 		} else {
 			std::cout << "Failure!" << std::endl;

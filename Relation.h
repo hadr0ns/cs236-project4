@@ -47,7 +47,7 @@ public:
 		for (auto elem : tuples) {
 			Tuple newTuple;
 			for (unsigned int i = 0; i < indices.size(); i++) {
-				newTuple.AddValue(elem.GetColumn(i));
+				newTuple.AddValue(elem.GetColumn(indices.at(i)));
 			}
 			returnRelation->AddTuple(newTuple);
 		}
@@ -106,7 +106,7 @@ public:
 				for (auto elem : tuples) {
 					ss << "\n  ";
 					for (int i = 0; i < header->GetSize(); i++) {
-						if (i < 0) {
+						if (i > 0) {
 							ss <<", ";
 						}
 						ss << header->GetAttribute(i) << "="<< elem.GetColumn(i);
