@@ -18,6 +18,14 @@ public:
 		//compare this tuple to another tuple i guess?
 		return this->values < other.values;
 	};
+	bool operator== (const Tuple & other) const{
+		//compare this tuple to another tuple i guess?
+		return this->values == other.values;
+	};
+	bool operator!= (const Tuple & other) const{
+		//compare this tuple to another tuple i guess?
+		return this->values != other.values;
+	};
 	void SetName(std::string name) {
 		associatedName = name;
 	}

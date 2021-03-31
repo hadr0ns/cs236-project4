@@ -26,22 +26,48 @@ public:
 		database->Build(program);
 		//std::cout << database->to_string()<<std::endl;
 		rules = database->GetRules();
-		bool added = false;
-		do {
-			EvaluateRules();
-			added = database->UnionToDatabase(evaluatedRules);
-			//if i run into errors here i may need to clear the evaluatedRules vector between passes. should it matter?
-		} while (added);
+		EvaluateRules();
+		//std::cout << database->to_string();
 		queries = database->GetQueries();
 		EvaluateQueries();
 
 	};
 	void EvaluateRules() {
-		//need to set this up to loop maybe?
-		std::vector<Relation*> rhs;
-		for (unsigned int i = 0; i < rules.size(); i++) {
-			evaluatedRules.push_back(EvaluateRule(rules.at(i)));
-		}
+		//need to set this up to loop maybe? --doing that earlier
+		int counter = 1;
+		bool added = false;
+		std::cout << "Rule Evaluation" << std::endl;
+		do {
+			database->AddedGlobalFalse();
+			std::vector<Relation*> rhs;
+			for (unsigned int i = 0; i < rules.size(); i++) {
+				Relation* newEvaluatedRule = new Relation();
+				newEvaluatedRule = EvaluateRule(rules.at(i));
+				evaluatedRules.push_back(newEvaluatedRule);
+				added = database->UnionToDatabaseSingle(newEvaluatedRule);
+				//printing
+				std::set<Tuple> addedTuples = database->GetNewTuples();
+				std::cout << rules.at(i)->to_string();
+				Relation* printRelation = new Relation();
+				for (auto elem : addedTuples) {
+					printRelation->AddTuple(elem);
+				}
+				Header* header = newEvaluatedRule->GetHeader();
+				printRelation->SetHeader(header);
+				std::string name = newEvaluatedRule->GetName();
+				printRelation->SetName(name);
+				std::cout << printRelation->evaluated_rule_to_string()<<std::endl;
+			}
+			//added = database->UnionToDatabase(evaluatedRules);
+			added = database->AddedGlobal();
+			if (added) {
+				counter++;
+			}
+			evaluatedRules.clear();
+			//if i run into errors here i may need to clear the evaluatedRules vector between passes. should it matter?
+		} while (added);
+		std::cout << "\nSchemes populated after " << counter << " passes through the Rules.\n" << std::endl;
+
 	};
 	Relation* EvaluateRule(Rule* r) {
 		std::vector<Predicate*> predicateList = r->GetPredicateList();
@@ -50,9 +76,10 @@ public:
 		//get the predicates out and evaluated
 		for (unsigned int i = 0; i < predicateList.size(); i++) {
 			//*DEBUG
-			std::cout << predicateList.at(i)->to_string() << std::endl;
+			//std::cout << predicateList.at(i)->to_string() << std::endl;
 			//END DEBUG */
 			Relation* newRelation = evaluatePredicate(predicateList.at(i));
+			//std::cout << "80i: " << i << newRelation->to_string();
 			rhs.push_back(newRelation);
 		}
 		//join rhs loop
@@ -68,28 +95,42 @@ public:
 				} else {
 					intRelation = intRelation->Join(rhs.at(j));
 				}
+				//std::cout << "intRelation at j = " << j << ": " << intRelation->to_string();
 			}
+		} else {
+			intRelation = rhs.at(0);
 		}
+
 		//project on the new relation to get the columns in the right order
 		std::vector<int> indices;
 		std::vector<Parameter*> headPredicateBody = headPredicate->GetBody();
+		std::string headPredicateName = headPredicate->GetName();
 		Header* intHeader = intRelation->GetHeader();
 		std::vector<std::string> intAttributes = intHeader->GetAttributes();
 		Relation* returnRelation = new Relation();
+		std::vector<std::string> headPredicateBodyNames;
 		for (unsigned int i = 0; i < headPredicateBody.size(); i++) {
+			headPredicateBodyNames.push_back(headPredicateBody.at(i)->GetName());
+		}
+		for (unsigned int i = 0; i < headPredicateBodyNames.size(); i++) {
 			for (unsigned int j = 0; j < intAttributes.size(); j++) {
-				if (headPredicateBody.at(i)==intAttributes.at(j)) {
+				if (headPredicateBodyNames.at(i)==intAttributes.at(j)) {
 					indices.push_back(j);
 				}
 			}
 		}
 		returnRelation = intRelation->Project(indices);
-
-		returnRelation->Rename(headPredicateBody);
+		Relation* matchingRelation = database->GetMatchingRelation(headPredicateName);
+		Header* matchingRelationHeader = matchingRelation->GetHeader();
+		std::vector<std::string> matchingRelationHeaderAttributes = matchingRelationHeader->GetAttributes();
+		returnRelation = returnRelation->Rename(matchingRelationHeaderAttributes);
+		returnRelation->SetName(headPredicateName);
+		//std::cout << "line 113" << returnRelation->to_string()<<std::endl;
 
 		return returnRelation;
 	}
 	void EvaluateQueries() {
+		std::cout << "Query Evaluation" << std::endl;
 		for (unsigned int i = 0; i < queries.size(); i++) {
 			//Relation* newRelation = new Relation();
 			Relation* newRelation = evaluatePredicate(queries.at(i));

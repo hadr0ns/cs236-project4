@@ -22,6 +22,8 @@ private:
 	std::vector<Header*> headers;
 	std::vector<Tuple> tuples;
 	std::vector<Rule*> rules;
+	std::set<Tuple> newTuples;
+	bool addedglobal;
 public:
 	Database() {};
 	void Build(DatalogProgram* program) {
@@ -65,6 +67,7 @@ public:
 					relation->AddTuple(tuples.at(j));
 				}
 			}
+			relation->SetName(relationName);
 			databaseMap.insert({relationName, relation});
 		}
 	}
@@ -91,17 +94,52 @@ public:
 		return rules;
 	}
 	bool UnionToDatabase(std::vector<Relation*> evaluatedRules) {
+		newTuples.clear();
 		bool added = false;
-		for (auto pair : databaseMap) {
-			std::set<Tuple> tuples = pair.second->GetTuples();
-			std::set<Tuple> evaluatedRulesTuples = evaluatedRules->GetTuples();
+		for (unsigned int i = 0; i < evaluatedRules.size(); i++) {
+			std::set<Tuple> evaluatedRulesTuples = evaluatedRules.at(i)->GetTuples();
+			std::string name = evaluatedRules.at(i)->GetName();
+			Relation* matchingRelation = GetMatchingRelation(name);
+			std::set<Tuple> tuples = matchingRelation->GetTuples();
 			for (auto elem : evaluatedRulesTuples) {
 				if (tuples.insert(elem).second) {
 					added = true;
+					matchingRelation->AddTuple(elem);
+					newTuples.insert(elem);
 				}
 			}
 		}
 		return added;
+	}
+	bool UnionToDatabaseSingle(Relation* evaluatedRule) {
+		newTuples.clear();
+		bool added = false;
+		std::set<Tuple> evaluatedRuleTuples = evaluatedRule->GetTuples();
+		std::string name = evaluatedRule->GetName();
+		Relation* matchingRelation = GetMatchingRelation(name);
+		//std::cout << "matching relation is " << matchingRelation->to_string();
+		std::set<Tuple> tuples = matchingRelation->GetTuples();
+		for (auto elem : evaluatedRuleTuples) {
+			if (tuples.insert(elem).second) {
+				added = true;
+				if (added) {
+					addedglobal = true;
+				}
+				matchingRelation->AddTuple(elem);
+				newTuples.insert(elem);
+			}
+		}
+		//std::cout << to_string();
+		return added;
+	}
+	bool AddedGlobal() {
+		return addedglobal;
+	}
+	std::set<Tuple> GetNewTuples() {
+		return newTuples;
+	}
+	void AddedGlobalFalse() {
+		addedglobal = false;
 	}
 
 };

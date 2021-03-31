@@ -6,7 +6,7 @@
 #include <set>
 #include <list>
 #include <sstream>
-#include <pair>
+//#include <pair>
 
 #include "Tuple.h"
 #include "Header.h"
@@ -85,7 +85,7 @@ public:
 		for (auto tuple1 : tuples) {
 			for (auto tuple2 : joinRelation->GetTuples()) {
 				if (isJoinable(tuple1, tuple2, shouldMatch)) {
-					Tuple newTuple = CombineTuples(tuple1, tuple2, shouldMatch);
+					Tuple newTuple = CombineTuples(tuple1, tuple2, shouldMatch, header, header2);
 					returnRelation->AddTuple(newTuple);
 				}
 			}
@@ -95,30 +95,42 @@ public:
 	bool isJoinable(Tuple tuple1, Tuple tuple2, std::vector<std::pair<int, int>> shouldMatch) {
 		bool retVal = true;
 		for (unsigned int i = 0; i < shouldMatch.size(); i++) {
-			if (tuple1->GetColumn(shouldMatch.at(i).first) != tuple2->GetColumn(shouldMatch.at(i).second)) {
+			if (tuple1.GetColumn(shouldMatch.at(i).first) != tuple2.GetColumn(shouldMatch.at(i).second)) {
 				return false;
 			}
 			//else it just stays true if they all match and then returns true at the end
 		}
 		return retVal;
 	};
-	Tuple CombineTuples(Tuple tuple1, Tuple tuple2, std::vector<std::pair<int, int>> shouldMatch) {
-		std::vector<std::string> tuple1values = tuple1->GetValues();
-		std::vector<std::string> tuple2values = tuple2->GetValues();
+	Tuple CombineTuples(Tuple tuple1, Tuple tuple2, std::vector<std::pair<int, int>> shouldMatch, Header* header1, Header* header2) {
+		std::vector<std::string> tuple1values = tuple1.GetValues();
+		std::vector<std::string> tuple2values = tuple2.GetValues();
+		std::vector<std::string> header1attributes = header1->GetAttributes();
+		std::vector<std::string> header2attributes = header2->GetAttributes();
 		Tuple newTuple;
 		for (unsigned int i = 0; i < tuple1values.size(); i++) {
-			newTuple->AddValue(tuple1values.at(i));
+			newTuple.AddValue(tuple1values.at(i));
 		}
 		for (unsigned int i = 0; i < tuple2values.size();i++) {
 			bool isUnique = true;
 			for (unsigned int j = 0; j < tuple1values.size(); j++) {
-				if (tuple2values.at(i)==tuple1values.at(j)) {
+				if (header2attributes.at(i)==header1attributes.at(j)) {
 					isUnique = false;
 				}
 			}
 			if (isUnique == true) {
-				newTuple->AddValue(tuple2values.at(i));
+				newTuple.AddValue(tuple2values.at(i));
 			}
+		/*std::vector
+		for (unsigned int k = 0; k < shouldMatch.size(); k++) {
+			int first = shouldMatch.at(k).first;
+			int second = shouldMatch.at(k).second;
+
+		}
+		for (unsigned int j = 0; j < tuple1values.size(); j++) {
+
+		}
+		*/
 		}
 		return newTuple;
 	};
@@ -183,6 +195,29 @@ public:
 			ss<<"No";
 		} else {
 			ss << "Yes(" << tuples.size() << ")";
+			//fill in the rest here
+			if (header->GetSize() > 0) {
+				for (auto elem : tuples) {
+					ss << "\n  ";
+					for (int i = 0; i < header->GetSize(); i++) {
+						if (i > 0) {
+							ss <<", ";
+						}
+						ss << header->GetAttribute(i) << "="<< elem.GetColumn(i);
+					}
+				}
+			}
+
+
+		}
+		return ss.str();
+	}
+	std::string evaluated_rule_to_string() {
+		std::stringstream ss;
+		if (is_empty()) {
+			//ss<<"No";
+		} else {
+			//ss << "Yes(" << tuples.size() << ")";
 			//fill in the rest here
 			if (header->GetSize() > 0) {
 				for (auto elem : tuples) {
