@@ -31,6 +31,12 @@ public:
 		stringVersion+=".";
 		return stringVersion;
 	}
+	std::vector<Predicate*> GetPredicateList() {
+		return predicateList;
+	}
+	Predicate* GetHeadPredicate() {
+		return headPredicate;
+	}
 };
 
 #endif

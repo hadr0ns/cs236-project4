@@ -11,6 +11,7 @@
 #include "Relation.h"
 #include "Header.h"
 #include "Parameter.h"
+#include "Rule.h"
 
 class Database {
 private:
@@ -20,19 +21,19 @@ private:
 	std::vector<Predicate*> queries;
 	std::vector<Header*> headers;
 	std::vector<Tuple> tuples;
+	std::vector<Rule*> rules;
 public:
 	Database() {};
 	void Build(DatalogProgram* program) {
 		schemes = program->GetSchemes();
-		/*
-		for (unsigned int i = 0; i < program->GetSchemes().size(); i++) {
-			std::cout << "index " << i << ": schemes: " << schemes.at(i)->to_string() << std::endl;
-			std::cout << " from datalog program: " << program->GetSchemes().at(i)->to_string() << std::endl;
-		}
-		*/
 		facts = program->GetFacts();
 		queries = program->GetQueries();
+		rules = program->GetRules();
+		BuildSchemes();
 
+		//std::cout<<to_string()<<std::endl;
+	}
+	void BuildSchemes() {
 		for (unsigned int i = 0; i < schemes.size(); i++) {
 			Header* header = new Header();
 			header->SetName(schemes.at(i)->GetName());
@@ -66,7 +67,6 @@ public:
 			}
 			databaseMap.insert({relationName, relation});
 		}
-		//std::cout<<to_string()<<std::endl;
 	}
 	std::string to_string() {
 		std::stringstream ss;
@@ -87,7 +87,22 @@ public:
 		}
 		return 0;
 	}
-
+	std::vector<Rule*> GetRules() {
+		return rules;
+	}
+	bool UnionToDatabase(std::vector<Relation*> evaluatedRules) {
+		bool added = false;
+		for (auto pair : databaseMap) {
+			std::set<Tuple> tuples = pair.second->GetTuples();
+			std::set<Tuple> evaluatedRulesTuples = evaluatedRules->GetTuples();
+			for (auto elem : evaluatedRulesTuples) {
+				if (tuples.insert(elem).second) {
+					added = true;
+				}
+			}
+		}
+		return added;
+	}
 
 };
 

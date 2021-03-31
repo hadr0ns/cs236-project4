@@ -91,6 +91,9 @@ public:
 	std::vector<Predicate*> GetQueries() {
 		return queries;
 	}
+	std::vector<Rule*> GetRules() {
+		return rules;
+	}
 
 };
 

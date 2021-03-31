@@ -32,6 +32,9 @@ public:
 	std::string GetAttribute(int index) {
 		return attributes.at(index);
 	}
+	std::vector<std::string> GetAttributes() {
+		return attributes;
+	}
 	int GetSize() {
 		return attributes.size();
 	}
